@@ -1,0 +1,36 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. For a security problem, do not use this form: see SECURITY.md.
+        Never paste real bank data: replace labels, amounts and account numbers with made-up ones.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release, image tag or commit.
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation
+      options: [Docker compose, Manual, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant log lines (docker compose logs, storage/logs), without secrets or personal data.
+      render: text

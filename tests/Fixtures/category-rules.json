@@ -1,0 +1,6 @@
+[
+    {"category": "salary", "pattern": "EMPLOYEUR EXEMPLE", "priority": 10},
+    {"category": "Internal transfers", "pattern": "JEAN DUPONT", "priority": 15},
+    {"category": "groceries", "pattern": "Marche du village"},
+    {"category": "transport", "pattern": "BUS ", "priority": 20}
+]

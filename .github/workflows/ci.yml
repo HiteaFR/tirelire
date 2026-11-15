@@ -1,0 +1,72 @@
+name: CI
+
+# Tests, code style, production asset build and Docker image build.
+# The image is built to prove the Dockerfile, never pushed (no registry credentials here).
+# Actions are pinned by commit SHA (the version is in the comment); Dependabot proposes updates
+# after a 14-day cooldown (.github/dependabot.yml). GitHub-hosted runners only.
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: PHP 8.4
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, mbstring, fileinfo
+          coverage: none
+          tools: composer:v2
+
+      - name: Node 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          npm ci --no-audit --no-fund
+
+      - name: Build the assets
+        run: npm run build
+
+      - name: Code style (Pint)
+        run: vendor/bin/pint --test
+
+      # throwaway key for this run only (encrypted cookies in the HTTP tests)
+      - name: Tests
+        run: |
+          cp .env.example .env
+          php artisan key:generate --no-interaction
+          php artisan test --compact
+
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # built, never pushed: publishing to ghcr.io/hiteafr/tirelire comes later
+      - name: Build the Docker image
+        run: docker build --pull -t tirelire:ci .

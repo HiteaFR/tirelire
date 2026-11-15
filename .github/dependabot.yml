@@ -1,0 +1,56 @@
+# Dependency updates, with a 14-day cooldown: a release is proposed only once it is at least two
+# weeks old (supply-chain safety). Security updates are not delayed by the cooldown (GitHub
+# behaviour); they still go through review and CI like any other pull request.
+# Major versions are never proposed by version updates (ignore rules below): they are upgraded
+# deliberately, by hand. Security fixes that need a new major version are not proposed either:
+# the Dependabot alert stays open and the upgrade is done by hand.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 5
+    groups:
+      composer-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # base images pinned by version and digest in Dockerfile
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

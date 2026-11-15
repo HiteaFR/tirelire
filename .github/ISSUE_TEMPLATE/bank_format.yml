@@ -1,0 +1,28 @@
+name: New bank format
+description: Ask for (or offer) support for another bank's CSV export.
+labels: [bank-format]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A new format needs a sample to write and test the parser. Use made-up data only: keep the
+        header line and the structure, but replace every label, amount, date and account number.
+  - type: input
+    id: bank
+    attributes:
+      label: Bank
+    validations:
+      required: true
+  - type: textarea
+    id: export
+    attributes:
+      label: How to get the export
+      description: Where the CSV export is in the bank's website or app.
+  - type: textarea
+    id: sample
+    attributes:
+      label: Anonymized sample
+      description: Header line and a few rows of made-up data, exactly as the file looks (separator, quotes, encoding).
+      render: text
+    validations:
+      required: true

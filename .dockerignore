@@ -1,0 +1,36 @@
+# Allowlist: only what the image needs enters the build context. Anything else in the working
+# tree (local files, data, exports, caches) is left out, whatever its name.
+*
+!app/
+!bootstrap/
+!config/
+!database/
+!docker/
+!lang/
+!public/
+!resources/
+!routes/
+!storage/
+!artisan
+!composer.json
+!composer.lock
+!package.json
+!package-lock.json
+!vite.config.js
+
+# Inside the allowed folders: no data, caches or local builds.
+bootstrap/cache/*.php
+database/*.sqlite*
+public/build
+public/hot
+public/storage
+storage/app/private/*
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*
+**/*.csv
+**/*.sql
+**/.DS_Store
