@@ -1,9 +1,10 @@
 # Dependency updates, with a 14-day cooldown: a release is proposed only once it is at least two
 # weeks old (supply-chain safety). Security updates are not delayed by the cooldown (GitHub
 # behaviour); they still go through review and CI like any other pull request.
-# Major versions are never proposed by version updates (ignore rules below): they are upgraded
-# deliberately, by hand. Security fixes that need a new major version are not proposed either:
-# the Dependabot alert stays open and the upgrade is done by hand.
+# Major versions of Composer and npm packages and of base images are not proposed by version
+# updates (ignore rules below): they are upgraded deliberately, by hand. Security fixes that need
+# a new major version of these are not proposed either: the Dependabot alert stays open and the
+# upgrade is done by hand.
 version: 2
 updates:
   - package-ecosystem: composer
@@ -34,15 +35,14 @@ updates:
       npm-minor:
         update-types: [minor, patch]
 
+  # major versions of actions are proposed: they mostly move to a newer Node runtime, and CI
+  # checks the pull request; blocking them would leave actions on a deprecated runtime
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
     cooldown:
       default-days: 14
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
 
   # base images pinned by version and digest in Dockerfile
   - package-ecosystem: docker
