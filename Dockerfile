@@ -1,7 +1,9 @@
 # Tirelire image: FrankenPHP (Caddy + PHP 8.4) running as a non-root user, SQLite on a volume.
 #
-#   docker compose up -d --build
+#   TIRELIRE_IMAGE=tirelire:local docker compose up -d --build
 #   docker compose exec app php artisan finance:user you@example.com
+#
+# Published image (each release): ghcr.io/hiteafr/tirelire, see compose.yaml and the README.
 #
 # Base images are pinned by exact version AND by digest of the multi-architecture index (read on
 # 2026-11-14 with `docker buildx imagetools inspect`). To change a version, change both together,
@@ -9,10 +11,12 @@
 #
 # Stages: PHP dependencies (composer, without dev packages); assets (npm ci, vite build); final
 # image. Lock files only, never composer update nor npm install. The build context is an allowlist
-# (.dockerignore).
+# (.dockerignore). The first two stages run on the platform of the build machine ($BUILDPLATFORM):
+# their result (PHP code, built assets) does not depend on the architecture, so an arm64 image
+# runs only its final stage under emulation.
 
 # --- 1. PHP dependencies --------------------------------------------------------------------------
-FROM composer:2.11.2@sha256:5bcb28b8d0edc4091125f8218f9d088f998bdfc843f8fbb9a4beb4dcd8625684 AS vendor
+FROM --platform=$BUILDPLATFORM composer:2.11.2@sha256:5bcb28b8d0edc4091125f8218f9d088f998bdfc843f8fbb9a4beb4dcd8625684 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction --no-progress
@@ -20,7 +24,7 @@ COPY . .
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scripts --no-interaction
 
 # --- 2. assets (Vite, Tailwind) -------------------------------------------------------------------
-FROM node:22.23.5-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS assets
+FROM --platform=$BUILDPLATFORM node:22.23.5-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund

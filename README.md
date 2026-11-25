@@ -39,9 +39,10 @@ who manage the same money. Your data stays in a single SQLite file on your own s
 ### Docker (recommended)
 
 ```bash
-git clone https://github.com/HiteaFR/tirelire.git
+git clone --branch v1.0.0 https://github.com/HiteaFR/tirelire.git
 cd tirelire
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 docker compose exec app php artisan finance:user you@example.com
 ```
 
@@ -57,7 +58,13 @@ chose.
   set `TRUSTED_PROXIES` and `SESSION_SECURE_COOKIE=true` (see [Configuration](#configuration)).
 - Settings are passed as environment variables, for example in a `.env` file next to
   `compose.yaml` (`APP_LOCALE=fr`, `APP_TIMEZONE=Europe/Paris`…).
-- To update: `git pull && docker compose up -d --build`.
+- The image `ghcr.io/hiteafr/tirelire` is published for `linux/amd64` and `linux/arm64` with each
+  [release](https://github.com/HiteaFR/tirelire/releases); `compose.yaml` pins the image of its
+  version. Check where an image comes from with
+  `gh attestation verify oci://ghcr.io/hiteafr/tirelire:1.0.0 --repo HiteaFR/tirelire`.
+- To update: read the release notes, then `git fetch --tags && git checkout v<version>`,
+  `docker compose pull && docker compose up -d`.
+- To build the image from source instead: `TIRELIRE_IMAGE=tirelire:local docker compose up -d --build`.
 - To try it with made-up data: `docker compose exec app php artisan db:seed --class=DemoSeeder`
   (on an instance without operations only).
 
@@ -67,7 +74,7 @@ Requirements: PHP 8.4 with the `pdo_sqlite` extension, Composer, Node 22 (to bui
 web server (nginx with PHP-FPM, Caddy, FrankenPHP…) serving the `public/` directory.
 
 ```bash
-git clone https://github.com/HiteaFR/tirelire.git
+git clone --branch v1.0.0 https://github.com/HiteaFR/tirelire.git
 cd tirelire
 composer install --no-dev --optimize-autoloader
 npm ci && npm run build

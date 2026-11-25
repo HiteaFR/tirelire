@@ -83,6 +83,33 @@ and take part in duplicate detection: do not translate or change them once a for
 - Keep the existing style: Pint formatting, PHPDoc rather than inline comments, explicit types.
 - Fill in the pull request template.
 
+## Releasing a version
+
+For maintainers. A release is a `vX.Y.Z` tag on `main`; `.github/workflows/release.yml` does the
+rest. Before the tag, in one pull request:
+
+1. `npm version X.Y.Z --no-git-tag-version` (`package.json` and `package-lock.json`);
+2. the image of `compose.yaml` (`ghcr.io/hiteafr/tirelire:X.Y.Z`), and in the README the image of
+   the attestation command and the two `git clone --branch vX.Y.Z` lines;
+3. in `CHANGELOG.md`, the `[Unreleased]` items move under `## [X.Y.Z] - YYYY-MM-DD`, and the links at
+   the end get the new version;
+4. `node scripts/release.mjs check X.Y.Z` must say that the version agrees everywhere (the release
+   workflow runs it first and stops otherwise).
+
+Pull requests that touch the image or this tooling run the same chain as a dry run (build and proof
+of both platforms, nothing pushed). On the tag, the workflow pushes the image by digest, proves each
+platform of that digest with `scripts/docker-proof.sh`, then sets the tags `X.Y.Z`, `X.Y`, `X` and
+`latest`, attaches a signed provenance and creates the release with the notes of the changelog
+entry. A run that fails before the tag step leaves only an untagged digest in the registry: fix,
+delete the Git tag and push it again. A run that fails after it can be re-run: it builds, proves and
+tags again before the release, so the version tags then point to the new digest. The first push of
+the image creates the `ghcr.io/hiteafr/tirelire` package as private: the run stops before the
+release until the package is made public (package settings, "Change visibility"), then re-run it.
+
+`scripts/docker-proof.sh` also runs by hand on a test Docker machine (`sh scripts/docker-proof.sh`):
+it builds the image of the current commit and works on uniquely named containers, volume and image
+only, removed at the end.
+
 ## Developer Certificate of Origin
 
 Contributions are accepted under the [Developer Certificate of Origin 1.1](https://developercertificate.org/)

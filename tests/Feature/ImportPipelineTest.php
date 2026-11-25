@@ -58,6 +58,62 @@ CSV;
         $this->assertSame(4, $second['skipped']);
     }
 
+    public function test_reimport_skips_known_operations_when_the_bank_rewrites_labels_and_balances(): void
+    {
+        $account = Account::create(['name' => 'Test']);
+        $importer = app(TransactionImporter::class);
+        $importer->import($account, self::CSV);
+        // Même période, nouveau format de libellé, et une opération antidatée
+        // (-24,00 le 14/09) qui décale tous les soldes suivants.
+        $rewritten = <<<'CSV'
+Date;Date de valeur;Débit;Crédit;Libellé;Solde
+14/09/2025;14/09/2025;-24,00;;BOULANGERIE EXEMPLE VILLE 13/09 CARTE X000;982,00
+15/09/2025;15/09/2025;-6,50;;CAFE EXEMPLE VILLE 12/09 CARTE X000;975,50
+15/09/2025;15/09/2025;-6,50;;CAFE EXEMPLE VILLE 12/09 CARTE X000;969,00
+02/10/2025;02/10/2025;;2000,00;VIR EMPLOYEUR EXEMPLE SALAIRE-000001-1;2969,00
+06/10/2025;06/10/2025;-700,00;;VIR SEPA LOYER AB1C23456D789012;2269,00
+CSV;
+
+        $result = $importer->import($account, $rewritten);
+
+        $this->assertSame(1, $result['imported']);
+        $this->assertSame(4, $result['skipped']);
+        $this->assertSame(5, $account->transactions()->count());
+        $this->assertSame(1, $account->transactions()->where('amount_cents', 200000)->count());
+        $this->assertSame(1, $account->transactions()->where('amount_cents', -2400)->count());
+    }
+
+    public function test_reimport_adds_a_third_identical_operation_on_a_day_that_had_two(): void
+    {
+        $account = Account::create(['name' => 'Test']);
+        $importer = app(TransactionImporter::class);
+        $importer->import($account, self::CSV);
+        $withThirdCoffee = self::CSV."\n15/09/2025;15/09/2025;-6,50;;CAFE EXEMPLE VILLE 12/09 CARTE X000;987,00";
+
+        $result = $importer->import($account, $withThirdCoffee);
+
+        $this->assertSame(1, $result['imported']);
+        $this->assertSame(3, $account->transactions()->where('amount_cents', -650)->count());
+    }
+
+    public function test_reimport_newest_first_keeps_a_new_identical_operation_listed_before_the_known_one(): void
+    {
+        $account = Account::create(['name' => 'Test']);
+        $importer = app(TransactionImporter::class);
+        $importer->import($account, "Date;Date de valeur;Débit;Crédit;Libellé;Solde\n15/09/2025;15/09/2025;-6,50;;CAFE EXEMPLE;993,50");
+        $newestFirst = <<<'CSV'
+Date;Date de valeur;Débit;Crédit;Libellé;Solde
+15/09/2025;15/09/2025;-6,50;;CAFE EXEMPLE;987,00
+15/09/2025;15/09/2025;-6,50;;CAFE EXEMPLE;993,50
+CSV;
+
+        $result = $importer->import($account, $newestFirst);
+
+        $this->assertSame(1, $result['imported']);
+        $this->assertSame(1, $result['skipped']);
+        $this->assertSame(2, $account->transactions()->where('amount_cents', -650)->count());
+    }
+
     public function test_categorization_applies_seeded_rules(): void
     {
         $this->seed(TestCategorySeeder::class);

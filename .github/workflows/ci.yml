@@ -1,7 +1,8 @@
 name: CI
 
 # Tests, code style, production asset build and Docker image build.
-# The image is built to prove the Dockerfile, never pushed (no registry credentials here).
+# The image is built to prove the Dockerfile, never pushed (no registry credentials here): it is
+# published by release.yml, on a version tag.
 # Actions are pinned by commit SHA (the version is in the comment); Dependabot proposes updates
 # after a 14-day cooldown (.github/dependabot.yml). GitHub-hosted runners only.
 on:
@@ -51,6 +52,9 @@ jobs:
       - name: Code style (Pint)
         run: vendor/bin/pint --test
 
+      - name: Release tooling tests
+        run: node --test scripts/*.test.mjs
+
       # throwaway key for this run only (encrypted cookies in the HTTP tests)
       - name: Tests
         run: |
@@ -67,6 +71,6 @@ jobs:
         with:
           persist-credentials: false
 
-      # built, never pushed: publishing to ghcr.io/hiteafr/tirelire comes later
+      # built, never pushed: ghcr.io/hiteafr/tirelire is published by release.yml
       - name: Build the Docker image
         run: docker build --pull -t tirelire:ci .

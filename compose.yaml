@@ -1,21 +1,27 @@
-# Tirelire with Docker Compose. First start:
+# Tirelire with Docker Compose. Published image ghcr.io/hiteafr/tirelire (linux/amd64,
+# linux/arm64), version pinned below. First start:
 #
-#   docker compose up -d --build
+#   docker compose pull
+#   docker compose up -d
 #   docker compose exec app php artisan finance:user you@example.com
 #
 # then open http://localhost:8080. All the data (SQLite database, application key) is in the
 # tirelire-data volume: back it up.
+#
+# From source instead: TIRELIRE_IMAGE=tirelire:local docker compose up -d --build (or that
+# variable in a .env file next to this one), so that a local build never takes the name of a
+# published version.
 services:
   app:
     build: .
-    image: ghcr.io/hiteafr/tirelire:local
+    image: ${TIRELIRE_IMAGE:-ghcr.io/hiteafr/tirelire:1.0.0}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:${TIRELIRE_PORT:-8080}:8080"
     volumes:
       - tirelire-data:/var/lib/tirelire
     environment:
-      APP_URL: ${APP_URL:-http://localhost:8080}
+      APP_URL: ${APP_URL:-http://localhost:${TIRELIRE_PORT:-8080}}
       APP_LOCALE: ${APP_LOCALE:-en}
       APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
       # Behind an HTTPS reverse proxy: its IP address, and SESSION_SECURE_COOKIE=true.
